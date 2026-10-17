@@ -6,71 +6,103 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI Cartoon Video Maker</title>
 <style>
-body{font-family:Arial,sans-serif;background:#101827;color:white;margin:0;padding:20px}
-main{max-width:600px;margin:auto}
-h1{color:#8bb5ff}
-textarea,input,select{width:100%;padding:12px;margin:8px 0 16px;box-sizing:border-box;border-radius:8px;border:1px solid #475569;font-size:16px}
-textarea{height:150px}
-button{background:#3867e8;color:white;border:0;border-radius:8px;padding:13px;margin:5px 0;font-size:16px;width:100%}
-.card{background:#1e293b;padding:16px;border-radius:12px;margin-top:16px}
-pre{white-space:pre-wrap;overflow-wrap:anywhere}
+body{font-family:Arial,sans-serif;background:#101827;color:white;
+padding:18px;max-width:700px;margin:auto}
+h1{color:#67e8f9}
+textarea,input,select,button{width:100%;box-sizing:border-box;
+padding:13px;margin:8px 0;border-radius:9px;font-size:16px}
+textarea{height:180px}
+button{background:#06b6d4;color:#001018;border:0;font-weight:bold}
+.panel{background:#1e293b;padding:16px;border-radius:12px;margin-top:15px}
+video{width:100%;margin-top:12px}
+small{color:#cbd5e1}
 </style>
 </head>
 <body>
-<main>
 <h1>🎬 AI Cartoon Video Maker</h1>
-<p>अपनी कहानी लिखें और वीडियो की योजना तैयार करें।</p>
+<p>अपनी हिंदी कहानी डालें और कार्टून वीडियो बनाने का अनुरोध भेजें।</p>
 
-<label>वीडियो का नाम</label>
-<input id="title" value="जादुई जंगल की कहानी">
-
+<div class="panel">
 <label>अपनी कहानी लिखें</label>
 <textarea id="story" placeholder="यहाँ अपनी पूरी हिंदी कहानी लिखें..."></textarea>
 
-<label>वीडियो की लंबाई</label>
-<select id="duration">
-<option>1 मिनट</option>
-<option>5 मिनट</option>
-<option selected>15 मिनट</option>
-<option>20 मिनट</option>
+<label>वीडियो की शैली</label>
+<select id="style">
+<option>3D Cartoon</option>
+<option>3D Animated Movie</option>
+<option>Kids Cartoon</option>
 </select>
 
-<button onclick="makePlan()">दृश्य योजना बनाएँ</button>
-<button onclick="sampleStory()">नमूना कहानी भरें</button>
+<label>वीडियो की अवधि</label>
+<select id="duration">
+<option value="30">30 सेकंड — परीक्षण</option>
+<option value="60">1 मिनट</option>
+<option value="300">5 मिनट</option>
+<option value="900">15 मिनट</option>
+</select>
 
-<div class="card">
-<h3>📽️ आपकी वीडियो योजना</h3>
-<div id="output">आपकी कहानी यहाँ दृश्यों में बाँटी जाएगी।</div>
+<button id="generate" onclick="generateVideo()">
+वीडियो जनरेट करें
+</button>
+
+<p id="status">अभी कोई वीडियो जनरेट नहीं हुआ है।</p>
+<video id="player" controls hidden></video>
+<a id="download" hidden download="cartoon-video.mp4">
+वीडियो डाउनलोड करें
+</a>
 </div>
-</main>
 
 <script>
-function sampleStory(){
-document.getElementById("story").value=
-"एक गाँव में मोहन नाम का बच्चा रहता था। एक दिन उसे जंगल में एक जादुई चिड़िया मिली। चिड़िया ने उसे एक रहस्यमय महल का रास्ता दिखाया। मोहन ने अपनी समझदारी से गाँव को एक बड़े संकट से बचाया।";
-}
-function makePlan(){
-const title=document.getElementById("title").value.trim();
-const story=document.getElementById("story").value.trim();
-const duration=document.getElementById("duration").value;
-if(!story){
-document.getElementById("output").textContent="पहले अपनी कहानी लिखिए।";
-return;
-}
-const scenes=story.split(/[।!?]+/).map(s=>s.trim()).filter(Boolean);
-const prompts=scenes.map((scene,i)=>
-"दृश्य "+(i+1)+": "+scene+
-"\nवीडियो प्रॉम्प्ट: रंगीन 3D कार्टून, सिनेमैटिक लाइटिंग, स्पष्ट भाव, 16:9 दृश्य।"
-);
-document.getElementById("output").innerHTML="";
-const heading=document.createElement("h3");
-heading.textContent=title+" — "+duration;
-document.getElementById("output").appendChild(heading);
-prompts.forEach(p=>{
-const block=document.createElement("pre");
-block.textContent=p;
-document.getElementById("output").appendChild(block);
-});
+async function generateVideo() {
+  const story = document.getElementById("story").value.trim();
+  const style = document.getElementById("style").value;
+  const duration = Number(document.getElementById("duration").value);
+  const status = document.getElementById("status");
+  const button = document.getElementById("generate");
+  const player = document.getElementById("player");
+  const download = document.getElementById("download");
+
+  if (!story) {
+    status.textContent = "पहले अपनी कहानी लिखिए।";
+    return;
+  }
+
+  button.disabled = true;
+  status.textContent = "वीडियो जनरेशन सेवा से संपर्क हो रहा है...";
+  player.hidden = true;
+  download.hidden = true;
+
+  try {
+    const response = await fetch("/api/generate", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({story, style, duration})
+    });
+
+    if (!response.ok) {
+      throw new Error("वीडियो सेवा उपलब्ध नहीं है।");
+    }
+
+    const result = await response.json();
+
+    if (result.videoUrl) {
+      player.src = result.videoUrl;
+      player.hidden = false;
+      download.href = result.videoUrl;
+      download.hidden = false;
+      status.textContent = "वीडियो तैयार है!";
+    } else if (result.jobId) {
+      status.textContent =
+        "वीडियो बनाने का काम शुरू हुआ। जॉब ID: " + result.jobId;
+    } else {
+      throw new Error("वीडियो का परिणाम अभी नहीं मिला।");
+    }
+  } catch (error) {
+    status.textContent =
+      error.message + " सर्वर और AI वीडियो API जोड़ना आवश्यक है।";
+  } finally {
+    button.disabled = false;
+  }
 }
 </script>
 </body>
