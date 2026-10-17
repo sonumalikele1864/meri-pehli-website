@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Cartoon Video Maker</title>
+<style>
+body{font-family:Arial,sans-serif;background:#101827;color:white;margin:0;padding:20px}
+main{max-width:600px;margin:auto}
+h1{color:#8bb5ff}
+textarea,input,select{width:100%;padding:12px;margin:8px 0 16px;box-sizing:border-box;border-radius:8px;border:1px solid #475569;font-size:16px}
+textarea{height:150px}
+button{background:#3867e8;color:white;border:0;border-radius:8px;padding:13px;margin:5px 0;font-size:16px;width:100%}
+.card{background:#1e293b;padding:16px;border-radius:12px;margin-top:16px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<main>
+<h1>🎬 AI Cartoon Video Maker</h1>
+<p>अपनी कहानी लिखें और वीडियो की योजना तैयार करें।</p>
+
+<label>वीडियो का नाम</label>
+<input id="title" value="जादुई जंगल की कहानी">
+
+<label>अपनी कहानी लिखें</label>
+<textarea id="story" placeholder="यहाँ अपनी पूरी हिंदी कहानी लिखें..."></textarea>
+
+<label>वीडियो की लंबाई</label>
+<select id="duration">
+<option>1 मिनट</option>
+<option>5 मिनट</option>
+<option selected>15 मिनट</option>
+<option>20 मिनट</option>
+</select>
+
+<button onclick="makePlan()">दृश्य योजना बनाएँ</button>
+<button onclick="sampleStory()">नमूना कहानी भरें</button>
+
+<div class="card">
+<h3>📽️ आपकी वीडियो योजना</h3>
+<div id="output">आपकी कहानी यहाँ दृश्यों में बाँटी जाएगी।</div>
+</div>
+</main>
+
+<script>
+function sampleStory(){
+document.getElementById("story").value=
+"एक गाँव में मोहन नाम का बच्चा रहता था। एक दिन उसे जंगल में एक जादुई चिड़िया मिली। चिड़िया ने उसे एक रहस्यमय महल का रास्ता दिखाया। मोहन ने अपनी समझदारी से गाँव को एक बड़े संकट से बचाया।";
+}
+function makePlan(){
+const title=document.getElementById("title").value.trim();
+const story=document.getElementById("story").value.trim();
+const duration=document.getElementById("duration").value;
+if(!story){
+document.getElementById("output").textContent="पहले अपनी कहानी लिखिए।";
+return;
+}
+const scenes=story.split(/[।!?]+/).map(s=>s.trim()).filter(Boolean);
+const prompts=scenes.map((scene,i)=>
+"दृश्य "+(i+1)+": "+scene+
+"\nवीडियो प्रॉम्प्ट: रंगीन 3D कार्टून, सिनेमैटिक लाइटिंग, स्पष्ट भाव, 16:9 दृश्य।"
+);
+document.getElementById("output").innerHTML="";
+const heading=document.createElement("h3");
+heading.textContent=title+" — "+duration;
+document.getElementById("output").appendChild(heading);
+prompts.forEach(p=>{
+const block=document.createElement("pre");
+block.textContent=p;
+document.getElementById("output").appendChild(block);
+});
+}
+</script>
+</body>
+</html>
